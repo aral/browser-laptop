@@ -13,6 +13,7 @@ const NotificationItem = require('./notificationItem')
 // Utils
 const {getOrigin} = require('../../../../js/lib/urlutil')
 const frameStateUtil = require('../../../../js/state/frameStateUtil')
+const notificationBarState = require('../../../common/state/notificationBarState')
 
 // Styles
 const commonStyles = require('../styles/commonStyles')
@@ -26,19 +27,24 @@ class NotificationBar extends React.Component {
     const notifications = state.get('notifications', Immutable.List())
 
     const props = {}
+    // TODO: Make use of getActiveTabNotifications API instead
     props.activeNotifications = notifications
       .filter((item) => {
         return item.get('frameOrigin')
           ? activeOrigin === item.get('frameOrigin')
-          : true
+          : !item.get('greeting') // greetings indicate a global notification
       })
       .takeLast(3)
       .map((notification) => notification.get('message'))
 
+    props.isPerTab = notificationBarState.isPerTab(state)
     return props
   }
 
   render () {
+    if (!this.props.isPerTab) {
+      return null
+    }
     return <div className={css(commonStyles.notificationBar)} data-test-id='notificationBar'>
       {
         this.props.activeNotifications.map((message) =>
@@ -46,6 +52,32 @@ class NotificationBar extends React.Component {
         )
       }
     </div>
+  }
+}
+
+// TODO maybe this should be merged in <NotificationBar /> and defined
+// per conditional prop such as isGlobal={conditional}
+class BraveNotificationBar extends React.Component {
+  mergeProps (state, ownProps) {
+    const props = {}
+    props.notifications = notificationBarState.getGlobalNotifications(state)
+    props.isGlobal = notificationBarState.isGlobal(state)
+    return props
+  }
+
+  render () {
+    if (!this.props.isGlobal) {
+      return null
+    }
+    return (
+      <div className={css(commonStyles.notificationBar)} data-test-id='braveNotificationBar'>
+        {
+          this.props.notifications.map((notification) =>
+            <NotificationItem message={notification.get('message')} />
+          )
+        }
+      </div>
+    )
   }
 }
 
@@ -86,5 +118,6 @@ const styles = StyleSheet.create({
 
 module.exports = {
   NotificationBar: ReduxComponent.connect(NotificationBar),
+  BraveNotificationBar: ReduxComponent.connect(BraveNotificationBar),
   NotificationBarCaret
 }
