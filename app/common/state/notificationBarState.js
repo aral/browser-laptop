@@ -54,12 +54,12 @@ const notificationBarState = {
   },
 
   /**
-   * Checks whether or not the notification should be shown in a per-tab basis
+   * Checks whether or not there are per-tab notifications for the active tab
    * @param {Map} appState - The app state object
-   * @param {Boolean} - whether or not the notification should be shown per tab
+   * @return {Boolean} - whether or not the notification should be shown per tab
    */
   isPerTab: (state) => {
-    return !notificationBarState.getActiveTabNotifications(state).isEmpty()
+    return !notificationBarState.isGlobal(state)
   },
 
   /**
